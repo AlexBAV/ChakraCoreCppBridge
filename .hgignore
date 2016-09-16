@@ -1,0 +1,8 @@
+syntax: glob
+ChakraCore/bin/*
+ChakraCoreCppBridge.VC.*
+*/x64/*
+x64/*
+*/Win32/*
+Win32/*
+.vs/*
