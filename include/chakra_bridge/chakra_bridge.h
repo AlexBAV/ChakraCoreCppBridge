@@ -18,7 +18,9 @@
 #include <ChakraCore/inc/chakracommon.h>
 
 #pragma push_macro("max")
+#pragma push_macro("new")
 #undef max
+#undef new
 
 namespace jsc
 {
@@ -470,7 +472,7 @@ namespace jsc
 			}
 
 			// construct JavaScript array object of a given size
-			static value array(unsigned int size = 0)
+			static value uninitialized_array(unsigned int size = 0)
 			{
 				JsValueRef result;
 				check(JsCreateArray(size, &result));
@@ -737,7 +739,7 @@ namespace jsc
 			// index operators
 			prop_ref<prop_ref_indexed> operator [](value index) const;
 			prop_ref<prop_ref_propid> operator[](JsPropertyIdRef propid) const;
-			prop_ref<prop_ref_propid> operator [](LPCTSTR propname) const;
+			prop_ref<prop_ref_propid> operator [](const wchar_t *propname) const;
 
 			void set_indexed(value ordinal, const value &value) const
 			{
@@ -752,7 +754,7 @@ namespace jsc
 			}
 
 			// properties
-			void set(LPCTSTR propname, const value &value) const
+			void set(const wchar_t *propname, const value &value) const
 			{
 				JsPropertyIdRef propid;
 				check(JsGetPropertyIdFromName(propname, &propid));
@@ -771,7 +773,7 @@ namespace jsc
 				return result;
 			}
 
-			bool define_property(LPCTSTR propname, const value &descriptor) const
+			bool define_property(const wchar_t *propname, const value &descriptor) const
 			{
 				JsPropertyIdRef propid;
 				check(JsGetPropertyIdFromName(propname, &propid));
@@ -1178,7 +1180,7 @@ namespace jsc
 			return prop_ref<prop_ref_propid>{ *this, propid };
 		}
 
-		inline prop_ref<prop_ref_propid> value::operator [](LPCTSTR propname) const
+		inline prop_ref<prop_ref_propid> value::operator [](const wchar_t *propname) const
 		{
 			JsPropertyIdRef propid;
 			check(JsGetPropertyIdFromName(propname, &propid));
@@ -1389,9 +1391,12 @@ namespace jsc
 	using details::ExperimentalApiRunModule;
 }
 
+#if !defined(CBRIDGE_NO_GLOBAL_NAMESPACE)
 // Bring several items into global namespace
 using jsc::details::check;
 using jsc::details::succeeded;
 using jsc::details::failed;
+#endif
 
 #pragma pop_macro("max")
+#pragma pop_macro("new")
