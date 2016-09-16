@@ -1,3 +1,10 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) 2016 HHD Software Ltd.
+// Written by Alexander Bessonov
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
 #pragma once
 
 // STL
@@ -132,7 +139,7 @@ namespace jsc
 			runtime &operator =(const runtime &) = delete;
 
 			runtime(runtime &&o) noexcept :
-			handle(o.handle)
+				handle{ o.handle }
 			{
 				o.handle = JS_INVALID_RUNTIME_HANDLE;
 			}

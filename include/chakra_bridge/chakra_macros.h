@@ -1,4 +1,13 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) 2016 HHD Software Ltd.
+// Written by Alexander Bessonov
+//
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
 #pragma once
+
+// Boost.Preprocessor
 #include <boost/preprocessor/repetition/enum_params.hpp>
 
 #include "chakra_bridge.h"

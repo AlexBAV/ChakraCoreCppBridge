@@ -4,18 +4,18 @@ The purpose of this single-header library is to provide a convenient bridge betw
 
 [ChakraCore]: https://github.com/Microsoft/ChakraCore
 
-To start using this library, clone it and then `#include` the single header "chakra_bridge/chakra_bridge.h". Library has no external dependencies, except, obviously, for the ChakraCore itself.
+To start using this library, clone or download it and then `#include` the single header "chakra_bridge/chakra_bridge.h". Library has no external dependencies, except, obviously, for the ChakraCore itself.
 
 ## Code Structure
 
 This repository consists of the following subdirectories:
 
 * **include**
-  * Contains `chakra_bridge.h` header as well as `chakra_macros.h` header with additional macros.
+  * Contains `chakra_bridge.h` header as well as `chakra_macros.h` header with additional macros for advanced usage scenarios.
 * **example**
   * Contains an example project that illustrates the library usage.
 * **ChakraCore**
-  * Contains a copy of ChakraCore include files and binary files (binary files are not included, see README.md file for instructions on getting them). This is only required to build an example project.
+  * Contains a copy of ChakraCore include files and binary files (binary files are not included, see README.md file for instructions on getting them). This directory is only required to build an example project.
 
 ## Compiler Support
 
@@ -62,9 +62,9 @@ Remember that unless the current context is set, all other ChakraCore functions 
 
 This is a "heart" of the ChakraCoreCppBridge library. It is essentially a RAII-style wrapper for `JsValueRef` type with a number of useful methods and operators.
 
-First, let us note that the `value` class is a thin wrapper which has the same size as `JsValueRef`, that is a size of a pointer. They are cheap to copy, pass and store.
+First, let us note that the `value` class is a thin wrapper which has the same size as `JsValueRef`, that is, a size of a pointer. They are cheap to copy, pass and store.
 
-Remember that values of class `value` are never to be stored anywhere besides the current scope! ChakraCore manages the lifetime of these objects. If you need to save the value outside of the current scope, use the `referenced_value` class instead.
+Remember that values of class `value` are never to be stored anywhere except as in a local variable inside the current scope! ChakraCore manages the lifetime of these objects. If you need to save the value outside of the current scope, use the `referenced_value` class instead.
 
 #### Well-known Constants
 
@@ -87,7 +87,7 @@ Immediate values are integer values, floating-point values, boolean values and s
 | floating-point types | `Number` (through a call to `JsDoubleToNumber`) |
 | bool | `Boolean` |
 | std::wstring | `String` |
-| nullptr_t | Null (equivalent to calling `value::null()`) |
+| nullptr_t | Null (equivalent to calling `value::null`) |
 | enum | `Number`, based on underlying integer type |
 
 #### Creating Arrays
@@ -165,16 +165,16 @@ auto uint_value = v5.as<unsigned>();
 auto str_value = static_cast<std::wstring>(v4);
 ```
 
-Conversion to enum types are also supported.
+Conversion to `enum` types are also supported.
 
-Note that all conversion methods require the ChakraCore value be of correct or compatible type. If you try to convert a string or array value into an integer, an exception is thrown.
+Note that all conversion methods require the ChakraCore value be of correct or compatible type. For example, if you try to convert a string or array value into an integer, an exception is thrown.
 
 You may use one of the following methods before converting to C++ type if you want to change the underlying JavaScript type:
 
 ```C++
-value::to_number() const;   // convert to number
-value::to_object() const;   // convert to object
-value::to_string() const;   // convert to string
+value value::to_number() const;   // convert to number
+value value::to_object() const;   // convert to object
+value value::to_string() const;   // convert to string
 ```
 
 Use the following method to determine the type of the ChakraCore value:
@@ -188,7 +188,7 @@ In addition, the following methods may be used to test the properties of a type:
 ```C++
 // Test if the value is empty (uninitialized)
 bool value::is_empty() const noexcept;
-bool empty() const noexcept;
+bool value::empty() const noexcept;
 
 // Test if value is null
 bool value::is_null() const;
@@ -197,10 +197,10 @@ bool value::is_null() const;
 bool value::is_undefined() const;
 
 // Test is value is a number
-bool is_number() const;
+bool value::is_number() const;
 
 // Test if value is a boolean
-bool is_boolean() const;
+bool value::is_boolean() const;
 
 // Test if value is string
 bool value::is_string() const;
@@ -215,13 +215,13 @@ bool value::is_array() const;
 bool value::is_function() const;
 
 // Test if value is typed array
-bool is_typed_array() const;
+bool value::is_typed_array() const;
 
 // Test if value is an instance of ArrayBuffer class
-bool is_array_buffer() const;
+bool value::is_array_buffer() const;
 
 // Test if value is an instance of DataView class
-bool is_data_view() const;
+bool value::is_data_view() const;
 ```
 
 #### Creating Functions
@@ -230,12 +230,12 @@ One of the most powerful features of the ChakraCoreCppBridge library is an abili
 
 ```C++
 template<size_t ArgCount, class Callable>
-value::function(Callable callback);
+value value::function(Callable callback);
 ```
 
 Note that the caller **must** pass the number of callback function arguments as a first template parameter. The C++ language syntax does not allow the library to discover this information and it must be specified manually.
 
-The `callback` parameter can be any C++ callable object, like a plain function pointer, function object, lambda, a result of a call to `std::bind` and so on. It is allowed to return any type implicitly convertible to `value` (see above) or `void`.
+The `callback` parameter can be any C++ callable object, like a plain function pointer, function object, lambda, a result of a call to `std::bind` and so on. It is allowed to return value of any type implicitly convertible to `value` (see above) or be declared as `void`.
 
 Callable object may have any number of arguments of any compatible type. `value` type is also allowed and is useful to consume JavaScript objects or optional arguments. It is recommended to take string arguments by reference (`const std::wstring &`) to avoid extra copies.
 
@@ -245,9 +245,18 @@ ChakraCore explicitly forbids exceptions flowing through the API boundary. Chakr
 
 The library defines a `callback_exception` class. If the callback function should throw, it is recommended to throw an instance of this class or at least an instance of a class derived from `std::exception`.
 
-`callback_exception::callback_exception` takes a single std::wstring value with a description of an error which is then propagated in JavaScript `Error` object.
+`callback_exception::callback_exception` takes a single `std::wstring` value with a description of an error which is then propagated to caller in JavaScript `Error` object. If an instance of `std::exception` (or derived class) is thrown, library calls the `what` method and uses the returned string to construct JavaScript `Error` object. Otherwise, a generic "Unhandled Exception" message is used.
 
-The library allows the JavaScript to call the passed C++ callback with different number of arguments than declared. If more arguments are used, extra arguments are lost. If less arguments are used, the remaining are assumed to be empty `value`  values. This means that if the callback is about to have optional parameters, they all have to be of type `value`, otherwise the exception will be thrown during implicit conversion and will propagate to a caller. Although, this might be a required behavior.
+The library allows the JavaScript to call the passed C++ callback with unmatched number of arguments. If more arguments are passed, extra arguments are lost. If less arguments are passed, the remaining are assumed to be empty `value`  values. This means that if the callback is about to have optional parameters, they all have to be of type `value`, otherwise the exception will be thrown during implicit conversion and will propagate to a caller. Although, this might be a required behavior.
+
+Sample code:
+
+```C++
+auto f = jsc::value::function<2>([](const std::wstring &text, int order)
+{
+    return text + std::to_wstring(order);
+});
+```
 
 #### Calling JavaScript Functions
 
@@ -261,7 +270,7 @@ value value::operator()(const value *begin, const value *end) const;
 
 The first overload allows you to directly pass function arguments. As usual, you may pass arguments of any type allowed in `value` constructor.
 
-**Important!** ChakraCore exposes the first parameter as `this` to the callee. If you are calling a global function, remember passing the `nullptr` as a first argument.
+**Important!** ChakraCore exposes the first parameter as `this` to the callee. If you are calling a global function, remember passing the `nullptr` as a first argument. If you are calling a method of a "class", you must manually pass a reference to an object as a first parameter.
 
 The second overload is provided for convenience.
 
@@ -271,6 +280,7 @@ Overloaded `operator []` is used to access the JavaScript object properties. It 
 
 ```C++
 auto prop = obj[L"propName"];
+int prop_value = static_cast<int>(prop);
 obj[L"propName"] = prop_value;
 ```
 
@@ -284,19 +294,21 @@ auto value::operator [](value index) const;
 
 As you see, you can pass either the value name or property identifier.
 
-Working with indexed properties is also possible with following methods:
+Third overload is for working with indexed properties. Working with indexed properties is also possible with following methods:
 
 ```C++
 void value::set_indexed(value ordinal, const value &value);
 value value::get_indexed(value ordinal) const;
 ```
 
-A wrapper method around `JsDefineProperty` is:
+A wrapper method around `JsDefineProperty` is also provided in two overloads:
 
 ```C++
 bool value::define_property(JsPropertyIdRef id, const value &descriptor) const;
 bool value::define_property(const wchar_t *propname, const value &descriptor) const;
 ```
+
+Use the `value::prototype` method to get object's prototype.
 
 #### Creating Objects
 
@@ -328,24 +340,29 @@ value value::method(const wchar_t *name, Callable &&handler) const;
 
 // Read-only property with getter
 template<class Getter>
-value property(const wchar_t *name, Getter &&getter) const;
+value value::property(const wchar_t *name, Getter &&getter) const;
 
 // Read-write property with getter and setter
 template<class Getter, class Setter>
-value property(const wchar_t *name, Getter &&getter, Setter &&setter) const;
+value value::property(const wchar_t *name, Getter &&getter, Setter &&setter) const;
 ```
 
 There is also an overload of `value::object` method taking a pointer to `IUnknown` interface. It makes sure the COM object is not deleted until the ChakraCore garbage collector deletes the JavaScript object.
 
-Combined with a few macros in chakra_macros.h (requires boost.preprocessor library), it allows to easily expose C++ interfaces to JavaScript:
+##### Creating Dual Interfaces for C++ and JavaScript
+
+Combined with a few macros in `chakra_macros.h` (requires boost.preprocessor library), it allows to easily expose C++ interfaces to JavaScript:
 
 ```C++
 #include <chakra_bridge/chakra_macros.h>
 
 struct ISomeObject
 {
-    JSC_DECLARE_PROP_GET(a)
-    JSC_DECLARE_PROP(b)
+    // Define read-only property a (type int)
+    JSC_DECLARE_PROP_GET(int, a)
+
+    // Define read-write property b (type bool)
+    JSC_DECLARE_PROP(bool, b)
     
     virtual void print(const std::wstring &)=0;
 };
@@ -354,7 +371,9 @@ class SomeObject : public ISomeObject
 {
     bool b{false};
 public:
-    jsc::value to_javascript_object()
+    // This method creates a JavaScript object 
+    // representing this C++ object
+    jsc::value to_javascript_object() const
     {
         return jsc::value::object()
             JSC_PROP_GET(a)
@@ -363,23 +382,28 @@ public:
             ;
     }
 
+    // Property a getter
     virtual int get_a() override
     {
         return 42;
     }
 
+    // Property b getter
     virtual bool get_b() override
     {
         return b;
     }
 
+    // Property b setter
     virtual void set_b(bool v) override
     {
         b = v;
     }
 
+    // Method print
     virtual void print(const std::wstring &) override
     {
+        // ...
     }
 };
 ```
@@ -403,7 +427,7 @@ public:
     Some()
     {
         // initialize runtime, context and execute script
-
+        // ...
         obj = jsc::value::object(); // BAD!!!
     }
 };
@@ -422,7 +446,7 @@ public:
     Some()
     {
         // initialize runtime, context and execute script
-
+        // ...
         obj = jsc::value::object(); // Correct
     }
 };
@@ -445,7 +469,7 @@ bool succeeded(JsErrorCode error) noexcept;
 void check(JsErrorCode error);
 ```
 
-These functions are also brought into global scope, unless the `CBRIDGE_NO_GLOBAL_NAMESPACE` preprocessor constant is defined.
+These functions are also brought into global namespace, unless the `CBRIDGE_NO_GLOBAL_NAMESPACE` preprocessor constant is defined.
 
 #### Getting Exception Information
 
@@ -457,7 +481,7 @@ Use this function to convert the exception information to a text description wit
 
 ### Running Scripts
 
-The library provides a wrappers for a number of ChakraCore functions that are used to execute scripts. They are exactly the same as their ChakraCore counterparts except that they return `value` objects directly and throw if an error occurs:
+The library provides wrappers for a number of ChakraCore functions that are used to execute scripts. They are exactly the same as their ChakraCore counterparts except that they return `value` objects directly and throw if an error occurs:
 
 ```C++
 value RunScript(const wchar_t *script, JsSourceContext sourceContext, const wchar_t *sourceUrl);
