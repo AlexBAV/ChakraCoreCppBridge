@@ -274,6 +274,26 @@ The first overload allows you to directly pass function arguments. As usual, you
 
 The second overload is provided for convenience.
 
+Alternative syntax for calling functions which are properties of JavaScript objects (aka methods):
+
+```C++
+template<class...Args>
+value value::call(JsPropertyIdRef methodid, Args &&...args) const;
+
+template<class...Args>
+value value::call(const wchar_t *method_name, Args &&...args) const;
+```
+
+Sample usage:
+
+```C++
+jsc::value obj = ...;
+
+// The following two lines are equivalent:
+obj[L"methodName"](obj, arg1, arg2, ... argN);
+obj.call(L"methodName", arg1, arg2, ... argN);
+```
+
 #### Accessing Object Properties
 
 Overloaded `operator []` is used to access the JavaScript object properties. It returns a proxy object (not the `value` directly), allowing you not only to query property values, but also to assign them:

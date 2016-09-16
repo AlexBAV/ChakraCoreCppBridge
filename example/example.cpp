@@ -69,8 +69,8 @@ function testExternalObject(obj) {
 			return true;
 		});
 
-		// 3. Run JavaScript function
-		jsc::value::global()[L"testExternalFunction"](nullptr);	// will make a lambda above called
+		// 3. Run JavaScript function. Alternative call syntax
+		jsc::value::global().call(L"testExternalFunction");	// will make a lambda above called
 
 		// 4. Create a JavaScript object
 		int c = 42;
@@ -84,7 +84,7 @@ function testExternalObject(obj) {
 		});
 
 		// 5. Run JavaScript function
-		jsc::value::global()[L"testExternalObject"](nullptr, obj);
+		jsc::value::global().call(L"testExternalObject", obj);
 	}
 	catch (const jsc::exception &e)
 	{

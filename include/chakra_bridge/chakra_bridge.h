@@ -846,6 +846,21 @@ namespace jsc
 				return operator()({ value{ std::forward<Args>(args) }... });
 			}
 
+			// method call
+			template<class...Args>
+			value call(JsPropertyIdRef methodid, Args &&...args) const
+			{
+				return (*this)[methodid](*this, std::forward<Args>(args)...);
+			}
+
+			template<class...Args>
+			value call(const wchar_t *method_name, Args &&...args) const
+			{
+				JsPropertyIdRef propid;
+				check(JsGetPropertyIdFromName(method_name, &propid));
+				return call(propid, std::forward<Args>(args)...);
+			}
+
 			// value accessors
 			operator JsValueRef() const noexcept
 			{
