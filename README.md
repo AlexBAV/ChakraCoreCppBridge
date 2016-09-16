@@ -71,10 +71,10 @@ Remember that values of class `value` are never to be stored anywhere except as 
 There are several static methods which should be called to get a reference to built-in or well-known ChakraCore objects and values:
 
 ```C++
-static value value::null()  // returns a reference to a `Null` object.
-static value value::undefined() // returns a reference to an `undefined` value
-static value value::true_()  // returns a reference to `true` boolean value
-static value value::false_()    // returns a reference to `false` boolean value
+static value value::null();  // returns a reference to a `Null` object.
+static value value::undefined(); // returns a reference to an `undefined` value
+static value value::true_();  // returns a reference to `true` boolean value
+static value value::false_();    // returns a reference to `false` boolean value
 ```
 
 #### Creating ChakraCore Immediate Values
@@ -180,7 +180,7 @@ value value::to_string() const;   // convert to string
 Use the following method to determine the type of the ChakraCore value:
 
 ```C++
-JsValueType value::value_type() const
+JsValueType value::value_type() const;
 ```
 
 In addition, the following methods may be used to test the properties of a type:
@@ -359,12 +359,12 @@ Combined with a few macros in `chakra_macros.h` (requires boost.preprocessor lib
 struct ISomeObject
 {
     // Define read-only property a (type int)
-    JSC_DECLARE_PROP_GET(int, a)
+    JSC_DECLARE_PROP_GET(int, a);
 
     // Define read-write property b (type bool)
-    JSC_DECLARE_PROP(bool, b)
+    JSC_DECLARE_PROP(bool, b);
     
-    virtual void print(const std::wstring &)=0;
+    virtual void print(const std::wstring &) = 0;
 };
 
 class SomeObject : public ISomeObject
