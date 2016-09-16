@@ -39,7 +39,6 @@ function testExternalFunction() {
 }
 
 function testExternalObject(obj) {
-	var print = obj.d;
 	obj.print("a: " + obj.a);
 	obj.print("b: " + obj.b);
 	obj.print("c: " + obj.c);
@@ -54,17 +53,17 @@ function testExternalObject(obj) {
 		auto result = jsc::RunScript(script_body.c_str(), 0, L"");
 
 		// 1. Run JavaScript function sum to add two integer values
-		std::wcout << jsc::value::global()[L"sum"](nullptr, 2, 3).as_int() << L"\r\n";	// prints 5
+		std::wcout << jsc::value::global()[L"sum"](nullptr, 2, 3).as_int() << L"\r\n"s;	// prints 5
 
 		// 2. Add an external function to a script
 		jsc::value::global()[L"external_function"] =
 			jsc::value::function<3>([](const std::wstring &sval, bool bval, jsc::value object)
 		{
 			std::wcout <<
-				L"String argument: " << sval <<
+				L"String argument: "s << sval <<
 				L"\r\nBoolean argument: "s << bval <<
 				L"\r\nInteger argument in object: "s << static_cast<int>(object[L"a"]) <<
-				L"\r\nLength of JavaScript array: "s << object[L"b"][L"length"].as<int>() << L"\r\n";
+				L"\r\nLength of JavaScript array: "s << object[L"b"][L"length"].as<int>() << L"\r\n"s;
 
 			// Return value to JavaScript
 			return true;
@@ -89,6 +88,6 @@ function testExternalObject(obj) {
 	}
 	catch (const jsc::exception &e)
 	{
-		std::wcout << L"Exception code: " << e.code() << L"\r\n";
+		std::wcout << L"Exception code: "s << e.code() << L"\r\n"s;
 	}
 }
