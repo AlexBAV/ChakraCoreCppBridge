@@ -15,7 +15,7 @@ This repository consists of the following subdirectories:
 * **example**
   * Contains an example project that illustrates the library usage.
 * **ChakraCore**
-  * Contains a copy of ChakraCore include files and binary files (binary files are not included, see README.md file for instructions on getting them).
+  * Contains a copy of ChakraCore include files and binary files (binary files are not included, see README.md file for instructions on getting them). This is only required to build an example project.
 
 ## Compiler Support
 
@@ -175,6 +175,53 @@ You may use one of the following methods before converting to C++ type if you wa
 value::to_number() const;   // convert to number
 value::to_object() const;   // convert to object
 value::to_string() const;   // convert to string
+```
+
+Use the following method to determine the type of the ChakraCore value:
+
+```C++
+JsValueType value::value_type() const
+```
+
+In addition, the following methods may be used to test the properties of a type:
+
+```C++
+// Test if the value is empty (uninitialized)
+bool value::is_empty() const noexcept;
+bool empty() const noexcept;
+
+// Test if value is null
+bool value::is_null() const;
+
+// Test if value is undefined
+bool value::is_undefined() const;
+
+// Test is value is a number
+bool is_number() const;
+
+// Test if value is a boolean
+bool is_boolean() const;
+
+// Test if value is string
+bool value::is_string() const;
+
+// Test if value is object
+bool value::is_object() const;
+
+// Test if value is array
+bool value::is_array() const;
+
+// Test if value is function
+bool value::is_function() const;
+
+// Test if value is typed array
+bool is_typed_array() const;
+
+// Test if value is an instance of ArrayBuffer class
+bool is_array_buffer() const;
+
+// Test if value is an instance of DataView class
+bool is_data_view() const;
 ```
 
 #### Creating Functions
@@ -338,3 +385,83 @@ public:
 ```
 
 This code shows how easy it is to create an interface consumable both by C++ and JavaScript. `ISomeObject` may also derive from `IUnknown`, in which case a call to `jsc::value::object()` is replaced with `jsc::value::object(this)`.
+
+### `referenced_value` class
+
+If you need to store `value` objects outside of the current scope, use the `referenced_value` class:
+
+**Bad code:**
+
+```C++
+class Some
+{
+    jsc::runtime runtime;
+    jsc::context context;
+    jsc::value obj;
+
+public:
+    Some()
+    {
+        // initialize runtime, context and execute script
+
+        obj = jsc::value::object(); // BAD!!!
+    }
+};
+```
+
+**Correct code:**
+
+```C++
+class Some
+{
+    jsc::runtime runtime;
+    jsc::context context;
+    jsc::referenced_value obj;
+
+public:
+    Some()
+    {
+        // initialize runtime, context and execute script
+
+        obj = jsc::value::object(); // Correct
+    }
+};
+```
+
+### Exception Handling
+
+For convenience, library tries to work with instances of `value` class directly, that is, take them as arguments and return them as resulting values. If ChakraCore reports an error during its execution, the error information is packaged into the instance of `exception` class and thrown. Use the `exception::code` method to get the `JsErrorCode` of a failed operation or call the `exception::to_js_exception` method to create a JavaScript `Error` object with the description.
+
+The following helper functions are defined:
+
+```C++
+// True if failing error code
+bool failed(JsErrorCode error) noexcept;
+
+// True if successful error code
+bool succeeded(JsErrorCode error) noexcept;
+
+// Throw an exception if failed(error) is true
+void check(JsErrorCode error);
+```
+
+These functions are also brought into global scope, unless the `CBRIDGE_NO_GLOBAL_NAMESPACE` preprocessor constant is defined.
+
+#### Getting Exception Information
+
+```C++
+std::tuple<remapped_error, std::wstring> print_exception(JsErrorCode code);
+```
+
+Use this function to convert the exception information to a text description with optional line and position of an error. See the source code for more options.
+
+### Running Scripts
+
+The library provides a wrappers for a number of ChakraCore functions that are used to execute scripts. They are exactly the same as their ChakraCore counterparts except that they return `value` objects directly and throw if an error occurs:
+
+```C++
+value RunScript(const wchar_t *script, JsSourceContext sourceContext, const wchar_t *sourceUrl);
+value ParseScript(const wchar_t *script, JsSourceContext sourceContext, const wchar_t *sourceUrl);
+value ParseScriptWithAttributes(const wchar_t *script, JsSourceContext sourceContext, const wchar_t *sourceUrl, JsParseScriptAttributes parseAttributes);
+value ExperimentalApiRunModule(const wchar_t *script, JsSourceContext sourceContext, const wchar_t *sourceUrl);
+```
